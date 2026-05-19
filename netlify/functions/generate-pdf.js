@@ -1,10 +1,10 @@
 const PDFDocument = require('pdfkit');
 const JSZip = require('jszip');
 
-const W = 595.28, H = 841.89, MARGIN = 51;
-const DARK_SLATE='#2D3748', SLATE='#4A5568', LIGHT_SLATE='#EDF2F7';
-const MID_GREY='#CBD5E0', WARM_GREY='#718096', RED_REF='#C53030';
-const LIGHT_RED='#FFF5F5', ACCENT='#A0AEC0';
+const W=595.28,H=841.89,MARGIN=51;
+const DARK_SLATE='#2D3748',SLATE='#4A5568',LIGHT_SLATE='#EDF2F7';
+const MID_GREY='#CBD5E0',WARM_GREY='#718096',RED_REF='#C53030';
+const LIGHT_RED='#FFF5F5',ACCENT='#A0AEC0';
 
 function fillRect(doc,x,y,w,h,col){doc.save().rect(x,y,w,h).fill(col).restore();}
 
@@ -15,7 +15,7 @@ function drawCover(doc,companyName,companyFull){
   doc.font('Helvetica-Bold').fontSize(8).fillColor('#FFFFFF');
   doc.text(companyName,MARGIN,H-26,{lineBreak:false});
   doc.font('Helvetica').fontSize(7).fillColor(ACCENT);
-  doc.text(companyFull,MARGIN,H-15,{lineBreak:false});
+  doc.text(companyFull,MARGIN,H-15,{lineBreak:false,width:W-2*MARGIN});
 }
 
 function drawInner(doc,companyName,companyFull,address,postcode,pageNum){
@@ -91,14 +91,12 @@ async function extractImages(xlsxB64){
 function drawElevation(doc,label,rows,photos,startY){
   const cw=W-2*MARGIN;
   let y=startY;
-
   fillRect(doc,MARGIN,y,cw,26,DARK_SLATE);
   doc.font('Helvetica-Bold').fontSize(12).fillColor('#FFFFFF');
   doc.text(label,MARGIN+8,y+7,{lineBreak:false});
   y+=26;
   fillRect(doc,MARGIN,y,cw,3,SLATE);
   y+=11;
-
   if(photos&&photos.length>0){
     const n=Math.min(photos.length,3),gap=6;
     const pw=(cw-(n-1)*gap)/n,ph=pw*0.68;
@@ -108,7 +106,6 @@ function drawElevation(doc,label,rows,photos,startY){
     }
     y+=ph+10;
   }
-
   const rw=56;
   fillRect(doc,MARGIN,y,cw,22,DARK_SLATE);
   fillRect(doc,MARGIN+rw,y,3,22,RED_REF);
@@ -116,7 +113,6 @@ function drawElevation(doc,label,rows,photos,startY){
   doc.text('Ref',MARGIN+4,y+7,{lineBreak:false,width:rw-8,align:'center'});
   doc.text('Detail / Drawing Reference',MARGIN+rw+10,y+7,{lineBreak:false});
   y+=22;
-
   if(rows&&rows.length){
     rows.forEach((row,i)=>{
       const rh=26,bg=i%2===0?LIGHT_SLATE:'#FFFFFF';
@@ -136,7 +132,6 @@ function drawElevation(doc,label,rows,photos,startY){
     doc.text('No considerations recorded',MARGIN+10,y+8,{lineBreak:false});
     y+=26;
   }
-
   y+=10;
   fillRect(doc,MARGIN,y,cw,22,SLATE);
   doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF');
@@ -153,29 +148,40 @@ exports.handler=async(event)=>{
     'Access-Control-Allow-Headers':'Content-Type',
     'Access-Control-Allow-Methods':'POST,OPTIONS'
   };
+
   if(event.httpMethod==='OPTIONS')return{statusCode:200,headers,body:''};
   if(event.httpMethod!=='POST')return{statusCode:405,headers,body:'Method not allowed'};
 
   try{
-    const body=event.isBase64Encoded?Buffer.from(event.body,'base64').toString():event.body;
-    const data=JSON.parse(body);
-    const{company,address,postcode,elevations=[]}=data;
+    // Parse body - handle both base64 and plain
+    let rawBody=event.body||'';
+    if(event.isBase64Encoded)rawBody=Buffer.from(rawBody,'base64').toString('utf8');
+    if(!rawBody)return{statusCode:400,headers,body:JSON.stringify({error:'Empty body'})};
+
+    let data;
+    try{data=JSON.parse(rawBody);}
+    catch(e){return{statusCode:400,headers,body:JSON.stringify({error:'JSON parse failed: '+e.message})};}
+
+    if(!data.company)return{statusCode:400,headers,body:JSON.stringify({error:'Missing company'})};
+    if(!data.address)return{statusCode:400,headers,body:JSON.stringify({error:'Missing address'})};
+
+    const{company,address,postcode='',elevations=[]}=data;
     const designer=data.designer||'—';
     const jobRef=data.job_ref||'—';
     const photoB64=data.photo||null;
     const xlsxB64=data.xlsx||null;
 
-    const companyName=company.name;
-    const parts=[company.addr1];
+    const companyName=company.name||'';
+    const parts=[company.addr1||''];
     if(company.addr2)parts.push(company.addr2);
-    parts.push(`${company.city}  ${company.postcode}`);
+    parts.push(`${company.city||''}  ${company.postcode||''}`);
     if(company.phone)parts.push(company.phone);
-    const companyFull=parts.join(', ');
+    const companyFull=parts.filter(Boolean).join(', ');
 
     let sheetImages={};
     if(xlsxB64){
       try{sheetImages=await extractImages(xlsxB64);}
-      catch(e){console.error('xlsx:',e.message);}
+      catch(e){console.error('xlsx error:',e.message);}
     }
 
     const chunks=[];
@@ -185,7 +191,7 @@ exports.handler=async(event)=>{
     const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
     const cw=W-2*MARGIN;
 
-    // COVER
+    // COVER PAGE
     doc.addPage();
     drawCover(doc,companyName,companyFull);
     let y=MARGIN;
@@ -207,6 +213,7 @@ exports.handler=async(event)=>{
         doc.image(buf,MARGIN,y,{width:cw,height:heroH,cover:[cw,heroH]});
         y+=heroH;
       }catch(e){
+        console.error('Photo error:',e.message);
         fillRect(doc,MARGIN,y,cw,140,LIGHT_SLATE);
         y+=140;
       }
@@ -231,7 +238,7 @@ exports.handler=async(event)=>{
     ];
     infoRows.forEach(([l,v],i)=>{infoRow(doc,l,v,y,i%2===0);y+=22;});
 
-    // ELEVATIONS
+    // ELEVATION PAGES
     const ELEV_NAMES=['Front Elevation','Back Elevation','Side Elevation 1','Side Elevation 2'];
     const ELEV_SHEETS=[0,1,null,null];
     let pageNum=1;
@@ -253,12 +260,17 @@ exports.handler=async(event)=>{
 
     return{
       statusCode:200,
-      headers:{...headers,'Content-Type':'application/pdf','Content-Disposition':`attachment; filename="${fname}"`},
+      headers:{
+        ...headers,
+        'Content-Type':'application/pdf',
+        'Content-Disposition':`attachment; filename="${fname}"`
+      },
       body:pdf.toString('base64'),
       isBase64Encoded:true
     };
+
   }catch(e){
-    console.error('PDF error:',e);
-    return{statusCode:500,headers,body:JSON.stringify({error:e.message})};
+    console.error('PDF generation error:',e);
+    return{statusCode:500,headers,body:JSON.stringify({error:e.message,stack:e.stack})};
   }
 };
