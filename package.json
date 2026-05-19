@@ -1,0 +1,10 @@
+{
+  "name": "ewi-pdf-generator",
+  "version": "1.0.0",
+  "description": "EWI Thermal Bridging PDF Generator",
+  "dependencies": {
+    "pdfkit": "^0.14.0",
+    "jszip": "^3.10.1",
+    "sharp": "^0.33.0"
+  }
+}

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EWI Job Generator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:14px;background:#F7F8FA;color:#1A202C;min-height:100vh}
+.app-header{background:#2D3748;color:#fff;padding:16px 32px}
+.app-header h1{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+.app-header p{font-size:12px;color:#A0AEC0;margin-top:3px}
+.app-body{max-width:820px;margin:0 auto;padding:24px 20px}
+.tabs{display:flex;border-bottom:2px solid #E2E8F0;margin-bottom:1.5rem}
+.tab{padding:10px 22px;cursor:pointer;font-size:13px;color:#718096;border-bottom:2.5px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:6px;transition:all .15s}
+.tab.active{color:#2D3748;border-bottom-color:#4A5568;font-weight:700}
+.tab:hover:not(.active){color:#2D3748}
+.panel{display:none}.panel.active{display:block}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card-title{font-size:12px;font-weight:700;color:#2D3748;margin-bottom:1rem;text-transform:uppercase;letter-spacing:.05em}
+.field{margin-bottom:.9rem}
+label{display:block;font-size:12px;color:#718096;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+input[type=text],input[type=email],select,textarea{width:100%;font-size:13px;font-family:Arial,sans-serif;color:#1A202C;background:#fff;border:1px solid #CBD5E0;border-radius:7px;padding:8px 11px;outline:none;transition:border .15s}
+input:focus,select:focus,textarea:focus{border-color:#4A5568;box-shadow:0 0 0 3px rgba(74,85,104,.1)}
+textarea{resize:vertical;min-height:70px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:7px;border:1px solid #CBD5E0;background:#fff;color:#2D3748;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;font-weight:600;transition:all .15s}
+.btn:hover{background:#EDF2F7;border-color:#A0AEC0}
+.btn-primary{background:#2D3748;color:#fff;border-color:#2D3748}
+.btn-primary:hover{background:#4A5568}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:#FFF5F5;color:#C53030;border-color:#FC8181}
+.btn-danger:hover{background:#FED7D7}
+.upload-zone{border:1.5px dashed #CBD5E0;border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;color:#A0AEC0;font-size:13px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:all .15s;min-height:120px}
+.upload-zone:hover{border-color:#4A5568;color:#4A5568}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone i{font-size:30px}
+.photo-preview{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:.75rem;display:none}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-green{background:#F0FFF4;color:#276749}
+.badge-blue{background:#EBF8FF;color:#2B6CB0}
+.elev-section{border:1px solid #E2E8F0;border-radius:10px;margin-bottom:.9rem;overflow:hidden}
+.elev-header{background:#EDF2F7;padding:10px 14px;font-size:13px;font-weight:700;color:#2D3748;display:flex;align-items:center;justify-content:space-between}
+.elev-body{padding:14px}
+.consider-row{display:grid;grid-template-columns:90px 1fr 34px;gap:8px;align-items:center;margin-bottom:6px}
+.ref-inp{font-size:17px!important;font-weight:800!important;color:#C53030!important;text-align:center!important;border-color:#FC8181!important;background:#FFF5F5!important}
+.del-btn{background:none;border:1px solid #FC8181;border-radius:6px;cursor:pointer;color:#C53030;font-size:16px;line-height:1;padding:3px 8px;font-weight:700}
+.del-btn:hover{background:#FFF5F5}
+.add-link{font-size:12px;color:#718096;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-top:4px}
+.add-link:hover{color:#2D3748}
+.job-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #EDF2F7}
+.job-row:last-child{border-bottom:none}
+.empty{text-align:center;padding:2rem;color:#A0AEC0;font-size:13px}
+.progress-bar{display:none;align-items:center;gap:10px;padding:11px 16px;background:#EBF8FF;border:1px solid #BEE3F8;border-radius:8px;font-size:13px;color:#2B6CB0;margin-top:.75rem}
+.spinner{width:16px;height:16px;border:2px solid #BEE3F8;border-top-color:#2B6CB0;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-box{padding:11px 16px;background:#FFF5F5;border:1px solid #FC8181;border-radius:8px;font-size:13px;color:#C53030;margin-top:.75rem;display:none}
+.company-preview{background:#F7F8FA;border:1px solid #E2E8F0;border-radius:7px;padding:.9rem;margin-top:.5rem;font-size:13px;color:#4A5568;line-height:1.8}
+.col-hdr-row{display:grid;grid-template-columns:90px 1fr 34px;gap:8px;font-size:11px;color:#718096;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;padding:0 2px}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1><i class="ti ti-file-description" aria-hidden="true"></i> EWI Job Generator</h1>
+  <p>AE Energy Solutions — Thermal Bridging Design Documents</p>
+</div>
+
+<div class="app-body">
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('job')"><i class="ti ti-file-plus" aria-hidden="true"></i> New job</div>
+  <div class="tab" onclick="switchTab('jobs')"><i class="ti ti-folder" aria-hidden="true"></i> Saved jobs</div>
+  <div class="tab" onclick="switchTab('companies')"><i class="ti ti-building" aria-hidden="true"></i> Companies</div>
+</div>
+
+<!-- NEW JOB -->
+<div id="tab-job" class="panel active">
+
+  <div class="card">
+    <div class="card-title">Company &amp; property details</div>
+    <div class="field">
+      <label>Company</label>
+      <select id="company-select" onchange="updateCompanyPreview()"></select>
+      <div class="company-preview" id="company-preview"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Property address</label><input type="text" id="prop-address" placeholder="e.g. 3 Tai Bryn Hyfryd"></div>
+      <div class="field"><label>Postcode</label><input type="text" id="prop-postcode" placeholder="e.g. LL54 7AE"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>System designer</label><input type="text" id="system-designer" placeholder="e.g. SPS Envirowall"></div>
+      <div class="field"><label>Job reference</label><input type="text" id="job-ref" placeholder="e.g. JOB-2024-001"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Front of property photo</div>
+    <div class="upload-zone">
+      <input type="file" accept="image/*" onchange="handlePhoto(this)" id="photo-input">
+      <i class="ti ti-photo" aria-hidden="true"></i>
+      <strong style="font-size:13px;color:#4A5568">Click to upload photo</strong>
+      <span style="font-size:12px">JPG or PNG — appears on the cover page</span>
+    </div>
+    <img id="photo-preview" class="photo-preview" alt="Property photo preview">
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <span id="photo-name" style="font-size:12px;color:#718096"></span>
+      <span class="badge badge-green" id="photo-badge" style="display:none"><i class="ti ti-check" style="font-size:11px"></i> Ready</span>
+      <button class="btn btn-sm btn-danger" onclick="clearPhoto()" id="photo-clear-btn" style="display:none">Remove</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Upload spreadsheet</div>
+    <p style="font-size:12px;color:#718096;margin-bottom:.75rem">Upload your EWI spreadsheet — consideration rows and any embedded photos are pulled into the PDF automatically.</p>
+    <div class="upload-zone" style="min-height:100px">
+      <input type="file" accept=".xlsx,.xls" onchange="handleXl(this)" id="xl-input">
+      <i class="ti ti-table" aria-hidden="true"></i>
+      <strong style="font-size:13px;color:#4A5568">Click to upload Excel spreadsheet</strong>
+      <span style="font-size:12px">.xlsx — auto-fills all elevation data and photos</span>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <span id="xl-name" style="font-size:12px;color:#718096"></span>
+      <span class="badge badge-blue" id="xl-badge" style="display:none"><i class="ti ti-check" style="font-size:11px"></i> Loaded</span>
+      <button class="btn btn-sm btn-danger" onclick="clearXl()" id="xl-clear-btn" style="display:none">Remove</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Elevation considerations</div>
+    <p style="font-size:12px;color:#718096;margin-bottom:1rem">Ref codes appear bold and red in the PDF. Upload a spreadsheet to auto-fill, or enter manually.</p>
+    <div id="elevations-container"></div>
+  </div>
+
+  <div id="gen-progress" class="progress-bar">
+    <div class="spinner"></div>
+    <span id="gen-progress-text">Generating PDF — please wait…</span>
+  </div>
+  <div id="gen-error" class="err-box"></div>
+
+  <div style="display:flex;gap:10px;margin-top:.5rem;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="generatePDF()">
+      <i class="ti ti-file-download" aria-hidden="true"></i> Generate &amp; download PDF
+    </button>
+    <button class="btn" onclick="clearForm()">
+      <i class="ti ti-refresh" aria-hidden="true"></i> Clear form
+    </button>
+  </div>
+</div>
+
+<!-- SAVED JOBS -->
+<div id="tab-jobs" class="panel">
+  <div class="card">
+    <div class="card-title">Saved jobs</div>
+    <div id="jobs-list"></div>
+  </div>
+</div>
+
+<!-- COMPANIES -->
+<div id="tab-companies" class="panel">
+  <div class="card">
+    <div class="card-title">Companies</div>
+    <div id="companies-list"></div>
+    <button class="btn" onclick="showAddCompany()" style="margin-top:1rem">
+      <i class="ti ti-plus" aria-hidden="true"></i> Add company
+    </button>
+  </div>
+  <div class="card" id="add-company-form" style="display:none">
+    <div class="card-title" id="company-form-title">Add company</div>
+    <input type="hidden" id="edit-company-id">
+    <div class="field"><label>Company name</label><input type="text" id="c-name" placeholder="AE Energy Solutions Limited"></div>
+    <div class="field"><label>Address line 1</label><input type="text" id="c-addr1" placeholder="Unit 9, Greenhill Court"></div>
+    <div class="field"><label>Address line 2</label><input type="text" id="c-addr2" placeholder="Springmeadow Business Park, Rumney"></div>
+    <div class="grid2">
+      <div class="field"><label>City</label><input type="text" id="c-city" placeholder="Cardiff"></div>
+      <div class="field"><label>Postcode</label><input type="text" id="c-postcode" placeholder="CF3 2AG"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Phone (optional)</label><input type="text" id="c-phone"></div>
+      <div class="field"><label>Email (optional)</label><input type="text" id="c-email"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:.5rem">
+      <button class="btn btn-primary" onclick="saveCompany()">Save company</button>
+      <button class="btn" onclick="hideAddCompany()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end app-body -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const ELEVATIONS = ['Front Elevation','Back Elevation','Side Elevation 1','Side Elevation 2'];
+let photoData = null, xlData = null;
+let jobs = [], companies = [];
+
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+function init(){
+  companies = lsGet('ewi_companies') || [];
+  if(!companies.length){
+    companies = [{
+      id:'ae1', name:'AE Energy Solutions Limited',
+      addr1:'Unit 9, Greenhill Court', addr2:'Springmeadow Business Park, Rumney',
+      city:'Cardiff', postcode:'CF3 2AG', phone:'', email:''
+    }];
+    lsSet('ewi_companies', companies);
+  }
+  jobs = lsGet('ewi_jobs') || [];
+  renderCompanySelect();
+  renderCompanies();
+  renderJobs();
+  buildElevationForms();
+}
+
+function renderCompanySelect(){
+  const s = document.getElementById('company-select');
+  s.innerHTML = companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  updateCompanyPreview();
+}
+
+function updateCompanyPreview(){
+  const id = document.getElementById('company-select').value;
+  const c  = companies.find(x=>x.id===id);
+  if(!c){document.getElementById('company-preview').innerHTML='';return;}
+  document.getElementById('company-preview').innerHTML =
+    `<strong>${c.name}</strong><br>${c.addr1}${c.addr2?', '+c.addr2:''}, ${c.city}&nbsp;&nbsp;${c.postcode}${c.phone?'<br>'+c.phone:''}${c.email?'&nbsp;&nbsp;'+c.email:''}`;
+}
+
+function buildElevationForms(data){
+  const el = document.getElementById('elevations-container');
+  el.innerHTML = ELEVATIONS.map(name => {
+    const key = name.replace(/\s/g,'_');
+    return `<div class="elev-section">
+      <div class="elev-header">
+        <span>${name}</span>
+        <span class="add-link" onclick="addRow('${key}')"><i class="ti ti-plus"></i> Add row</span>
+      </div>
+      <div class="elev-body">
+        <div class="col-hdr-row"><span>Ref code</span><span>Detail / drawing reference</span><span></span></div>
+        <div id="rows-${key}"></div>
+        <div class="add-link" onclick="addRow('${key}')" style="margin-top:4px"><i class="ti ti-plus"></i> Add row</div>
+        <div class="field" style="margin-top:.9rem;margin-bottom:0">
+          <label>General comments</label>
+          <textarea id="comments-${key}" rows="2" placeholder="Notes for this elevation…"></textarea>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  if(data){
+    data.forEach(({name,rows,comments})=>{
+      const key = name.replace(/\s/g,'_');
+      rows.forEach(r=>addRow(key,r.ref,r.desc));
+      const ct = document.getElementById(`comments-${key}`);
+      if(ct&&comments) ct.value = comments;
+    });
+  }
+}
+
+function addRow(key, ref='', desc=''){
+  const c  = document.getElementById(`rows-${key}`);
+  const id = `r-${key}-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;
+  const d  = document.createElement('div');
+  d.className = 'consider-row'; d.id = id;
+  d.innerHTML = `<input type="text" class="ref-inp" value="${esc(ref)}" placeholder="1">
+    <input type="text" value="${esc(desc)}" placeholder="e.g. Roof Line Closure System — RCS Detail 1">
+    <button class="del-btn" onclick="document.getElementById('${id}').remove()">×</button>`;
+  c.appendChild(d);
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
+function getElevationData(){
+  return ELEVATIONS.map(name=>{
+    const key  = name.replace(/\s/g,'_');
+    const rows = [...document.getElementById(`rows-${key}`).querySelectorAll('.consider-row')].map(r=>{
+      const ins = r.querySelectorAll('input');
+      return {ref:ins[0].value.trim(), desc:ins[1].value.trim()};
+    }).filter(r=>r.ref||r.desc);
+    const comments = document.getElementById(`comments-${key}`).value.trim();
+    return {name, rows, comments};
+  });
+}
+
+function handlePhoto(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    photoData = e.target.result;
+    const prev = document.getElementById('photo-preview');
+    prev.src = photoData; prev.style.display = 'block';
+    document.getElementById('photo-name').textContent = file.name;
+    document.getElementById('photo-badge').style.display = 'inline-flex';
+    document.getElementById('photo-clear-btn').style.display = 'inline-flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto(){
+  photoData = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-badge').style.display = 'none';
+  document.getElementById('photo-clear-btn').style.display = 'none';
+  document.getElementById('photo-name').textContent = '';
+  document.getElementById('photo-input').value = '';
+}
+
+function handleXl(input){
+  const file = input.files[0]; if(!file) return;
+
+  // Read as base64 for server (images)
+  const b64r = new FileReader();
+  b64r.onload = e => { xlData = e.target.result; };
+  b64r.readAsDataURL(file);
+
+  // Also parse text data to fill form
+  const binr = new FileReader();
+  binr.onload = e => {
+    try{
+      const wb   = XLSX.read(e.target.result, {type:'binary'});
+      const data = ELEVATIONS.map(name=>{
+        const ws   = wb.Sheets[name];
+        const rows = [];
+        if(ws && ws['!ref']){
+          const range = XLSX.utils.decode_range(ws['!ref']);
+          for(let r=range.s.r; r<=range.e.r; r++){
+            for(let c=range.s.c; c<=range.e.c; c++){
+              const cell = ws[XLSX.utils.encode_cell({r,c})];
+              const next = ws[XLSX.utils.encode_cell({r,c:c+1})];
+              if(cell && typeof cell.v==='number' && cell.v>0 && cell.v<200 &&
+                 next && typeof next.v==='string' && next.v.length>4){
+                rows.push({ref:String(cell.v), desc:next.v.trim()});
+              }
+            }
+          }
+        }
+        return {name, rows, comments:''};
+      });
+      buildElevationForms(data);
+    }catch(err){ console.warn('XL parse:', err); }
+  };
+  binr.readAsBinaryString(file);
+
+  document.getElementById('xl-name').textContent = file.name;
+  document.getElementById('xl-badge').style.display = 'inline-flex';
+  document.getElementById('xl-clear-btn').style.display = 'inline-flex';
+}
+
+function clearXl(){
+  xlData = null;
+  document.getElementById('xl-name').textContent = '';
+  document.getElementById('xl-badge').style.display = 'none';
+  document.getElementById('xl-clear-btn').style.display = 'none';
+  document.getElementById('xl-input').value = '';
+}
+
+async function generatePDF(){
+  const address   = document.getElementById('prop-address').value.trim();
+  const postcode  = document.getElementById('prop-postcode').value.trim();
+  const designer  = document.getElementById('system-designer').value.trim();
+  const jobRef    = document.getElementById('job-ref').value.trim();
+  const companyId = document.getElementById('company-select').value;
+  const company   = companies.find(c=>c.id===companyId);
+
+  if(!address){ alert('Please enter a property address.'); return; }
+  if(!company){ alert('Please select a company.'); return; }
+
+  const progress = document.getElementById('gen-progress');
+  const errEl    = document.getElementById('gen-error');
+  progress.style.display = 'flex';
+  errEl.style.display    = 'none';
+  document.getElementById('gen-progress-text').textContent = 'Generating PDF — please wait…';
+
+  try{
+    const resp = await fetch('/.netlify/functions/generate-pdf', {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        company, address, postcode,
+        designer, job_ref: jobRef,
+        elevations: getElevationData(),
+        photo: photoData || null,
+        xlsx:  xlData   || null
+      })
+    });
+
+    if(!resp.ok){
+      const err = await resp.json().catch(()=>({error:'Server error '+resp.status}));
+      throw new Error(err.error || 'Server error');
+    }
+
+    const blob = await resp.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `EWI_${address.replace(/\s+/g,'_')}_${postcode}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    const today = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const job   = {id:'job-'+Date.now(), date:today, address:`${address}, ${postcode}`, company:company.name, jobRef};
+    jobs.unshift(job);
+    lsSet('ewi_jobs', jobs.slice(0,100));
+    renderJobs();
+    progress.style.display = 'none';
+
+  }catch(e){
+    progress.style.display = 'none';
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function renderJobs(){
+  const el = document.getElementById('jobs-list');
+  if(!jobs.length){
+    el.innerHTML='<div class="empty"><i class="ti ti-folder-off" style="font-size:28px;display:block;margin-bottom:8px"></i>No saved jobs yet.</div>';
+    return;
+  }
+  el.innerHTML = jobs.map(j=>`
+    <div class="job-row">
+      <div>
+        <div style="font-weight:700;font-size:13px">${j.address}</div>
+        <div style="font-size:11px;color:#718096">${j.company}${j.jobRef?' · '+j.jobRef:''} · ${j.date}</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteJob('${j.id}')"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+}
+
+function deleteJob(id){
+  if(!confirm('Remove this job from the list?')) return;
+  jobs = jobs.filter(j=>j.id!==id);
+  lsSet('ewi_jobs', jobs);
+  renderJobs();
+}
+
+function renderCompanies(){
+  const el = document.getElementById('companies-list');
+  if(!companies.length){ el.innerHTML='<div class="empty">No companies yet.</div>'; return; }
+  el.innerHTML = companies.map(c=>`
+    <div class="job-row">
+      <div>
+        <div style="font-weight:700;font-size:13px">${c.name}</div>
+        <div style="font-size:12px;color:#718096">${c.addr1}${c.addr2?', '+c.addr2:''}, ${c.city} ${c.postcode}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="editCompany('${c.id}')"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCompany('${c.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function showAddCompany(){
+  document.getElementById('add-company-form').style.display = 'block';
+  document.getElementById('company-form-title').textContent = 'Add company';
+  document.getElementById('edit-company-id').value = '';
+  ['c-name','c-addr1','c-addr2','c-city','c-postcode','c-phone','c-email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-company-form').scrollIntoView({behavior:'smooth'});
+}
+
+function hideAddCompany(){ document.getElementById('add-company-form').style.display='none'; }
+
+function editCompany(id){
+  const c = companies.find(x=>x.id===id); if(!c) return;
+  document.getElementById('add-company-form').style.display = 'block';
+  document.getElementById('company-form-title').textContent = 'Edit company';
+  document.getElementById('edit-company-id').value = id;
+  document.getElementById('c-name').value    = c.name;
+  document.getElementById('c-addr1').value   = c.addr1;
+  document.getElementById('c-addr2').value   = c.addr2||'';
+  document.getElementById('c-city').value    = c.city;
+  document.getElementById('c-postcode').value= c.postcode;
+  document.getElementById('c-phone').value   = c.phone||'';
+  document.getElementById('c-email').value   = c.email||'';
+  document.getElementById('add-company-form').scrollIntoView({behavior:'smooth'});
+}
+
+function saveCompany(){
+  const name = document.getElementById('c-name').value.trim();
+  if(!name){ alert('Company name is required.'); return; }
+  const editId = document.getElementById('edit-company-id').value;
+  const obj = {
+    id: editId || 'co-'+Date.now(), name,
+    addr1:   document.getElementById('c-addr1').value.trim(),
+    addr2:   document.getElementById('c-addr2').value.trim(),
+    city:    document.getElementById('c-city').value.trim(),
+    postcode:document.getElementById('c-postcode').value.trim(),
+    phone:   document.getElementById('c-phone').value.trim(),
+    email:   document.getElementById('c-email').value.trim()
+  };
+  companies = editId ? companies.map(c=>c.id===editId?obj:c) : [...companies, obj];
+  lsSet('ewi_companies', companies);
+  renderCompanies();
+  renderCompanySelect();
+  hideAddCompany();
+}
+
+function deleteCompany(id){
+  if(!confirm('Delete this company?')) return;
+  companies = companies.filter(c=>c.id!==id);
+  lsSet('ewi_companies', companies);
+  renderCompanies();
+  renderCompanySelect();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['job','jobs','companies'][i]===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function clearForm(){
+  document.getElementById('prop-address').value = '';
+  document.getElementById('prop-postcode').value = '';
+  document.getElementById('system-designer').value = '';
+  document.getElementById('job-ref').value = '';
+  clearPhoto(); clearXl(); buildElevationForms();
+}
+
+init();
+</script>
+</body>
+</html>
